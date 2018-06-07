@@ -1,0 +1,6 @@
+[package]
+name = "ds-srv"
+version = "0.1.0"
+authors = ["Alexandre Lissy <lissyx@lissyx.dyndns.org>"]
+
+[dependencies]
