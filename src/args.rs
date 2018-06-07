@@ -41,7 +41,7 @@ pub struct ArgsParser;
 
 impl ArgsParser {
 	fn to_ip_addr(o: Option<&str>) -> IpAddr {
-		let default_ip = IpAddr::V4(Ipv4Addr::from_str("0.0.0.0").unwrap());
+		let default_ip = IpAddr::V6(Ipv6Addr::from_str("::0").unwrap());
 		match o {
 			Some(ip_str) => {
 				if Ipv6Addr::from_str(ip_str).is_ok() {
