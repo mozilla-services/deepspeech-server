@@ -17,6 +17,8 @@ use std::vec::Vec;
 use std::io::Cursor;
 use std::path::Path;
 
+use std::time::{Duration, Instant};
+
 #[derive(Debug)]
 pub struct RawAudioPCM {
 	pub content: Bytes
@@ -133,7 +135,10 @@ pub fn th_inference(model: String, alphabet: String, lm: String, trie: String, r
 						match ensure_valid_audio(desc) {
 							true  => {
 								let audio_buf :Vec<_> = reader.samples().map(|s| s.unwrap()).collect::<Vec<_>>();
+								let start  = Instant::now();
 								let result = model.speech_to_text(&audio_buf, AUDIO_SAMPLE_RATE).unwrap();
+								let duration = start.elapsed();
+								info!("Inference took: {:?}", duration);
 								inference_result(result, true)
 							},
 							false => inference_result("".to_string(), false)
