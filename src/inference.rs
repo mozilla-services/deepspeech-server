@@ -5,12 +5,14 @@ extern crate audrey;
 extern crate futures;
 
 extern crate bytes;
+extern crate byte_slice_cast;
 
 use self::deepspeech::Model;
 use self::audrey::Format;
 use self::audrey::read::Reader;
 use self::audrey::read::Description;
 use self::bytes::Bytes;
+use self::byte_slice_cast::*;
 
 use std::sync::mpsc::{Receiver, SyncSender};
 use std::vec::Vec;
@@ -18,6 +20,9 @@ use std::io::Cursor;
 use std::path::Path;
 
 use std::time::{Duration, Instant};
+
+use std::io::Write;
+use std::fs::File;
 
 #[derive(Debug)]
 pub struct RawAudioPCM {
@@ -128,6 +133,9 @@ pub fn th_inference(model: String, alphabet: String, lm: String, trie: String, r
 			Ok(audio) => {
 				info!("Received message: {:?} bytes", audio.content.len());
 
+				// let mut file = File::create("debug.wav").unwrap();
+				// file.write(&*audio.content).unwrap();
+
 				let inf = match Reader::new(Cursor::new(&*audio.content)) {
 					Ok(mut reader) => {
 						let desc = reader.description();
@@ -141,13 +149,21 @@ pub fn th_inference(model: String, alphabet: String, lm: String, trie: String, r
 								info!("Inference took: {:?}", duration);
 								inference_result(result, true)
 							},
+
 							false => inference_result("".to_string(), false)
 						}
 					},
 
 					Err(err)   => {
 						error!("Audrey read error: {:?}", err);
-						inference_result("".to_string(), false)
+						let start  = Instant::now();
+						let mut audio_u8 = audio.content.to_vec();
+						let mut audio_i16 = audio_u8.as_mut_slice_of::<i16>().unwrap();
+						info!("Trying with RAW PCM {:?} bytes", audio_i16.len());
+						let result = model.speech_to_text(&*audio_i16, AUDIO_SAMPLE_RATE).unwrap();
+						let duration = start.elapsed();
+						info!("Inference took: {:?}", duration);
+						inference_result(result, true)
 					}
 				};
 

@@ -1,6 +1,6 @@
 [package]
 name = "ds-srv"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Alexandre Lissy <lissyx@lissyx.dyndns.org>"]
 
 [dependencies]
@@ -12,6 +12,7 @@ simplelog = "0.5.2"
 hyper = "0.12.1"
 futures = "0.1.21"
 bytes = "0.4.8"
+byte-slice-cast = "0.2.0"
 serde = "1.0.66"
 serde_derive = "1.0.66"
 serde_json = "1.0.19"
