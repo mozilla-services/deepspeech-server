@@ -4,6 +4,8 @@ extern crate deepspeech;
 extern crate audrey;
 extern crate futures;
 
+extern crate mkstemp;
+
 extern crate bytes;
 extern crate byte_slice_cast;
 
@@ -20,9 +22,6 @@ use std::io::Cursor;
 use std::path::Path;
 
 use std::time::{Duration, Instant};
-
-use std::io::Write;
-use std::fs::File;
 
 #[derive(Debug)]
 pub struct RawAudioPCM {
@@ -123,7 +122,33 @@ fn inference_result(result: String, status: bool)
 	inf_result
 }
 
-pub fn th_inference(model: String, alphabet: String, lm: String, trie: String, rx_audio: Receiver<RawAudioPCM>, tx_string: SyncSender<InferenceResult>) {
+fn maybe_dump_debug(stream: Bytes, directory: String)
+{
+	#[cfg(feature="dump_debug_stream")]
+	{
+		use std::io::Write;
+		use std::fs::File;
+		use self::mkstemp::TempFile;
+
+		let temp_root = Path::new(&directory);
+		let temp_file_name = temp_root.join("ds-debug-wav-XXXXXX");
+
+		debug!("Dumping RAW PCM content to {:?} => {:?}", temp_root, temp_file_name);
+
+		let mut file =  TempFile::new(temp_file_name.to_str().unwrap(), false).unwrap();
+		file.write(&*stream).unwrap();
+	}
+}
+
+pub fn th_inference(
+	model: String,
+	alphabet: String,
+	lm: String,
+	trie: String,
+	rx_audio: Receiver<RawAudioPCM>,
+	tx_string: SyncSender<InferenceResult>,
+	dump_dir: String,
+) {
 	info!("Inference thread started");
 	let mut model = start_model(model, alphabet, lm, trie);
 
@@ -133,8 +158,7 @@ pub fn th_inference(model: String, alphabet: String, lm: String, trie: String, r
 			Ok(audio) => {
 				info!("Received message: {:?} bytes", audio.content.len());
 
-				// let mut file = File::create("debug.wav").unwrap();
-				// file.write(&*audio.content).unwrap();
+				maybe_dump_debug(audio.content.clone(), dump_dir.clone());
 
 				let inf = match Reader::new(Cursor::new(&*audio.content)) {
 					Ok(mut reader) => {

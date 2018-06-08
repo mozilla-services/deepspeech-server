@@ -31,7 +31,15 @@ fn main() {
 	let mut threads = Vec::new();
 	let rc_inference = rc.clone();
 	let thread_inference = thread::Builder::new().name("InferenceService".to_string()).spawn(move || {
-		th_inference(rc_inference.model, rc_inference.alphabet, rc_inference.lm, rc_inference.trie, rx_audio, tx_string);
+		th_inference(
+			rc_inference.model,
+			rc_inference.alphabet,
+			rc_inference.lm,
+			rc_inference.trie,
+			rx_audio,
+			tx_string,
+			rc_inference.dump_dir
+		);
 	});
 	threads.push(thread_inference);
 

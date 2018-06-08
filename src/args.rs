@@ -30,6 +30,7 @@ impl Into<simplelog::LevelFilter> for VerbosityLevel {
 pub struct RuntimeConfig {
 	pub http_ip: IpAddr,
 	pub http_port: TcpPort,
+	pub dump_dir: String,
 	pub model: String,
 	pub alphabet: String,
 	pub lm: String,
@@ -93,6 +94,13 @@ impl ArgsParser {
 								   .help("TCP port to listen on for HTTP")
 								   .takes_value(true)
 								   .required(false))
+							  .arg(clap::Arg::with_name("dump_dir")
+								   .short("d")
+								   .long("dump_dir")
+								   .value_name("DUMP_DIR")
+								   .help("Directory to use to dump debug WAV streams")
+								   .takes_value(true)
+								   .required(false))
 							  .arg(clap::Arg::with_name("model")
 								   .short("m")
 								   .long("model")
@@ -131,10 +139,11 @@ impl ArgsParser {
 		RuntimeConfig {
 			http_ip:	ArgsParser::to_ip_addr(matches.value_of("http_ip")),
 			http_port:  ArgsParser::to_port(matches.value_of("http_port")),
-			model:	  String::from(matches.value_of("model").unwrap()),
+			dump_dir:   String::from(matches.value_of("dump_dir").unwrap_or("/tmp")),
+			model:		String::from(matches.value_of("model").unwrap()),
 			alphabet:   String::from(matches.value_of("alphabet").unwrap()),
-			lm:		 String::from(matches.value_of("lm").unwrap()),
-			trie:	   String::from(matches.value_of("trie").unwrap()),
+			lm:			String::from(matches.value_of("lm").unwrap()),
+			trie:		String::from(matches.value_of("trie").unwrap()),
 			verbosity_level: ArgsParser::to_verbosity_level(matches.occurrences_of("v"))
 		}
 	}
