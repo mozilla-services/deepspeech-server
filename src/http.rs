@@ -10,15 +10,15 @@ use self::hyper::service::service_fn;
 use self::hyper::{Body, Method, Request, Response, Server, StatusCode};
 
 use std::net::{IpAddr, SocketAddr};
-use std::sync::mpsc::{Receiver, SyncSender};
+use std::sync::mpsc::sync_channel;
+use std::sync::mpsc::SyncSender;
 
 type ResponseFuture = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
 use inference::InferenceResult;
 use inference::RawAudioPCM;
 
-static mut tx_audio: Option<SyncSender<RawAudioPCM>> = None;
-static mut rx_string: Option<Receiver<InferenceResult>> = None;
+static mut tx_audio: Option<SyncSender<(RawAudioPCM, SyncSender<InferenceResult>)>> = None;
 
 fn http_handler(req: Request<Body>) -> ResponseFuture {
     debug!("Received HTTP: {} {}", req.method(), req.uri());
@@ -39,29 +39,47 @@ fn http_handler(req: Request<Body>) -> ResponseFuture {
                             content: raw_pcm.clone(),
                         };
 
-                        unsafe {
-                            match tx_audio.as_ref().unwrap().clone().send(pcm) {
-                                Ok(_) => debug!("Successfully sent message to thread"),
-                                Err(err) => {
-                                    error!("Error while sending message to thread: {:?}", err)
-                                }
-                            }
-                        }
+                        let (tx_string, rx_string) = sync_channel(0);
 
                         unsafe {
-                            match rx_string.as_ref().unwrap().recv() {
-                                Ok(decoded_audio) => {
-                                    info!("Received reply: {:?}", decoded_audio);
-                                    Response::builder()
-                                        .status(StatusCode::OK)
-                                        .header(CONTENT_TYPE, "application/json")
-                                        .body(Body::from(
-                                            serde_json::to_string(&decoded_audio).unwrap(),
-                                        ))
-                                        .unwrap()
-                                }
-                                Err(err_recv) => {
-                                    error!("Error trying to rx.recv(): {:?}", err_recv);
+                            match tx_audio {
+                                Some(ref tx_audio_ok) => match tx_audio_ok
+                                    .clone()
+                                    .send((pcm, tx_string))
+                                {
+                                    Ok(_) => {
+                                        debug!("Successfully sent message to thread");
+                                        match rx_string.recv() {
+                                            Ok(decoded_audio) => {
+                                                info!("Received reply: {:?}", decoded_audio);
+                                                Response::builder()
+                                                    .status(StatusCode::OK)
+                                                    .header(CONTENT_TYPE, "application/json")
+                                                    .body(Body::from(
+                                                        serde_json::to_string(&decoded_audio)
+                                                            .unwrap(),
+                                                    ))
+                                                    .unwrap()
+                                            }
+                                            Err(err_recv) => {
+                                                error!("Error trying to rx.recv(): {:?}", err_recv);
+                                                Response::builder()
+                                                    .status(StatusCode::NOT_FOUND)
+                                                    .body(infer.into())
+                                                    .unwrap()
+                                            }
+                                        }
+                                    }
+                                    Err(err) => {
+                                        error!("Error while sending message to thread: {:?}", err);
+                                        Response::builder()
+                                            .status(StatusCode::NOT_FOUND)
+                                            .body(infer.into())
+                                            .unwrap()
+                                    }
+                                },
+                                None => {
+                                    error!("Unable to tx.send()");
                                     Response::builder()
                                         .status(StatusCode::NOT_FOUND)
                                         .body(infer.into())
@@ -91,12 +109,10 @@ fn http_handler(req: Request<Body>) -> ResponseFuture {
 pub fn th_http_listener(
     http_ip: IpAddr,
     http_port: TcpPort,
-    _tx_audio: SyncSender<RawAudioPCM>,
-    _rx_string: Receiver<InferenceResult>,
+    _tx_audio: SyncSender<(RawAudioPCM, SyncSender<InferenceResult>)>,
 ) {
     unsafe {
         tx_audio = Some(_tx_audio);
-        rx_string = Some(_rx_string);
     }
 
     let socket = SocketAddr::new(http_ip, http_port);

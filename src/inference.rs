@@ -203,8 +203,7 @@ pub fn th_inference(
     alphabet: String,
     lm: String,
     trie: String,
-    rx_audio: Receiver<RawAudioPCM>,
-    tx_string: SyncSender<InferenceResult>,
+    rx_audio: Receiver<(RawAudioPCM, SyncSender<InferenceResult>)>,
     dump_dir: String,
     warmup_dir: String,
     warmup_cycles: i32,
@@ -218,8 +217,8 @@ pub fn th_inference(
 
     loop {
         info!("Model ready and waiting for data to infer ...");
-        let inf_result = match rx_audio.recv() {
-            Ok(audio) => {
+        match rx_audio.recv() {
+            Ok((audio, tx_string)) => {
                 info!("Received message: {:?} bytes", audio.content.len());
 
                 #[cfg(feature = "dump_debug_stream")]
@@ -256,18 +255,13 @@ pub fn th_inference(
                     }
                 };
 
-                inf
+                match tx_string.send(inf) {
+                    Ok(_) => {}
+                    Err(err) => error!("Error sending inference result: {:?}", err),
+                }
             }
 
-            Err(err_recv) => {
-                error!("Error trying to rx.recv(): {:?}", err_recv);
-                inference_error()
-            }
-        };
-
-        match tx_string.send(inf_result) {
-            Ok(_) => {}
-            Err(err) => error!("Error sending inference result: {:?}", err),
+            Err(err_recv) => error!("Error trying to rx.recv(): {:?}", err_recv),
         }
     }
 }

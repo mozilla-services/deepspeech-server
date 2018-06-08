@@ -26,7 +26,6 @@ fn main() {
     debug!("Parsed all CLI args: {:?}", rc);
 
     let (tx_audio, rx_audio) = sync_channel(0);
-    let (tx_string, rx_string) = sync_channel(0);
 
     let mut threads = Vec::new();
     let rc_inference = rc.clone();
@@ -39,7 +38,6 @@ fn main() {
                 rc_inference.lm,
                 rc_inference.trie,
                 rx_audio,
-                tx_string,
                 rc_inference.dump_dir,
                 rc_inference.warmup_dir,
                 rc_inference.warmup_cycles,
@@ -51,7 +49,7 @@ fn main() {
     let thread_http = thread::Builder::new()
         .name("HttpService".to_string())
         .spawn(move || {
-            th_http_listener(rc_http.http_ip, rc_http.http_port, tx_audio, rx_string);
+            th_http_listener(rc_http.http_ip, rc_http.http_port, tx_audio);
         });
     threads.push(thread_http);
 
