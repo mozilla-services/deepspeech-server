@@ -131,10 +131,19 @@ fn inference_error() -> InferenceResult {
 
 fn inference(m: &mut Model, buffer: &[i16]) -> InferenceResult {
     let start = Instant::now();
-    let result = m.speech_to_text(buffer, AUDIO_SAMPLE_RATE).unwrap();
+
+    let rv = match m.speech_to_text(buffer, AUDIO_SAMPLE_RATE) {
+        Ok(result) => inference_result(result, true),
+        Err(err) => {
+            error!("Error while running inference: {:?}", err);
+            inference_error()
+        }
+    };
+
     let duration = start.elapsed();
     info!("Inference took: {:?}", duration);
-    inference_result(result, true)
+
+    rv
 }
 
 fn maybe_dump_debug(stream: Bytes, directory: String) {
