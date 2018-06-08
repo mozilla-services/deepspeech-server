@@ -201,10 +201,16 @@ pub fn th_inference(
                     Err(err) => {
                         error!("Audrey read error: {:?}", err);
                         let mut audio_u8 = audio.content.to_vec();
-                        let mut audio_i16 = audio_u8.as_mut_slice_of::<i16>().unwrap();
-                        info!("Trying with RAW PCM {:?} bytes", audio_i16.len());
-
-                        inference(&mut model_instance, &*audio_i16)
+                        match audio_u8.as_mut_slice_of::<i16>() {
+                            Ok(audio_i16) => {
+                                info!("Trying with RAW PCM {:?} bytes", audio_i16.len());
+                                inference(&mut model_instance, &*audio_i16)
+                            }
+                            Err(err) => {
+                                error!("Unable to make u8 -> i16: {:?}", err);
+                                inference_error()
+                            }
+                        }
                     }
                 };
 
