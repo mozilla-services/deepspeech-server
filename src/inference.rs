@@ -77,22 +77,28 @@ fn start_model(model: String, alphabet: String, lm: String, trie: String)
 
 fn ensure_valid_audio(desc: Description) -> bool
 {
-	if desc.format() != AUDIO_FORMAT {
+	let rv_format = if desc.format() != AUDIO_FORMAT {
 		error!("Invalid audio format: {:?}", desc.format());
-		return false;
+		false
+    } else {
+        true
 	};
 
-	if desc.channel_count() != AUDIO_CHANNELS {
+	let rv_channels = if desc.channel_count() != AUDIO_CHANNELS {
 		error!("Invalid number of channels: {}", desc.channel_count());
-		return false;
+		false
+    } else {
+        true
 	};
 
-	if desc.sample_rate() != AUDIO_SAMPLE_RATE {
+	let rv_rate = if desc.sample_rate() != AUDIO_SAMPLE_RATE {
 		error!("Invalid sample rate: {}", desc.sample_rate());
-		return false;
-	}
+		false
+    } else {
+        true
+	};
 
-	true
+	rv_format && rv_channels && rv_rate
 }
 
 fn inference_result(result: String, status: bool)
