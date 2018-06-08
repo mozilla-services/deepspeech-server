@@ -49,7 +49,7 @@ fn http_handler(req: Request<Body>) -> ResponseFuture {
                         }
 
                         unsafe {
-                            match rx_string.as_ref().unwrap().clone().recv() {
+                            match rx_string.as_ref().unwrap().recv() {
                                 Ok(decoded_audio) => {
                                     info!("Received reply: {:?}", decoded_audio);
                                     Response::builder()
