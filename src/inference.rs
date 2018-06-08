@@ -21,7 +21,7 @@ use std::path::Path;
 use std::sync::mpsc::{Receiver, SyncSender};
 use std::vec::Vec;
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Debug)]
 pub struct RawAudioPCM {
@@ -125,6 +125,18 @@ fn inference_result(result: String, status: bool) -> InferenceResult {
     inf_result
 }
 
+fn inference_error() -> InferenceResult {
+    inference_result("".to_string(), false)
+}
+
+fn inference(m: &mut Model, buffer: &[i16]) -> InferenceResult {
+    let start = Instant::now();
+    let result = m.speech_to_text(buffer, AUDIO_SAMPLE_RATE).unwrap();
+    let duration = start.elapsed();
+    info!("Inference took: {:?}", duration);
+    inference_result(result, true)
+}
+
 fn maybe_dump_debug(stream: Bytes, directory: String) {
     #[cfg(feature = "dump_debug_stream")]
     {
@@ -155,7 +167,7 @@ pub fn th_inference(
     dump_dir: String,
 ) {
     info!("Inference thread started");
-    let mut model = start_model(model, alphabet, lm, trie);
+    let mut model_instance = start_model(model, alphabet, lm, trie);
 
     loop {
         info!("Waiting ...");
@@ -173,30 +185,20 @@ pub fn th_inference(
                             true => {
                                 let audio_buf: Vec<_> =
                                     reader.samples().map(|s| s.unwrap()).collect::<Vec<_>>();
-                                let start = Instant::now();
-                                let result =
-                                    model.speech_to_text(&audio_buf, AUDIO_SAMPLE_RATE).unwrap();
-                                let duration = start.elapsed();
-                                info!("Inference took: {:?}", duration);
-                                inference_result(result, true)
+                                inference(&mut model_instance, &*audio_buf)
                             }
 
-                            false => inference_result("".to_string(), false),
+                            false => inference_error(),
                         }
                     }
 
                     Err(err) => {
                         error!("Audrey read error: {:?}", err);
-                        let start = Instant::now();
                         let mut audio_u8 = audio.content.to_vec();
                         let mut audio_i16 = audio_u8.as_mut_slice_of::<i16>().unwrap();
                         info!("Trying with RAW PCM {:?} bytes", audio_i16.len());
-                        let result = model
-                            .speech_to_text(&*audio_i16, AUDIO_SAMPLE_RATE)
-                            .unwrap();
-                        let duration = start.elapsed();
-                        info!("Inference took: {:?}", duration);
-                        inference_result(result, true)
+
+                        inference(&mut model_instance, &*audio_i16)
                     }
                 };
 
@@ -205,7 +207,7 @@ pub fn th_inference(
 
             Err(err_recv) => {
                 error!("Error trying to rx.recv(): {:?}", err_recv);
-                inference_result("".to_string(), false)
+                inference_error()
             }
         };
 
