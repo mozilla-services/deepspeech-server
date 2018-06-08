@@ -138,23 +138,19 @@ fn inference(m: &mut Model, buffer: &[i16]) -> InferenceResult {
 }
 
 fn maybe_dump_debug(stream: Bytes, directory: String) {
-    #[cfg(feature = "dump_debug_stream")]
-    {
-        use self::mkstemp::TempFile;
-        use std::fs::File;
-        use std::io::Write;
+    use self::mkstemp::TempFile;
+    use std::io::Write;
 
-        let temp_root = Path::new(&directory);
-        let temp_file_name = temp_root.join("ds-debug-wav-XXXXXX");
+    let temp_root = Path::new(&directory);
+    let temp_file_name = temp_root.join("ds-debug-wav-XXXXXX");
 
-        debug!(
-            "Dumping RAW PCM content to {:?} => {:?}",
-            temp_root, temp_file_name
-        );
+    debug!(
+        "Dumping RAW PCM content to {:?} => {:?}",
+        temp_root, temp_file_name
+    );
 
-        let mut file = TempFile::new(temp_file_name.to_str().unwrap(), false).unwrap();
-        file.write(&*stream).unwrap();
-    }
+    let mut file = TempFile::new(temp_file_name.to_str().unwrap(), false).unwrap();
+    file.write(&*stream).unwrap();
 }
 
 pub fn th_inference(
@@ -175,6 +171,7 @@ pub fn th_inference(
             Ok(audio) => {
                 info!("Received message: {:?} bytes", audio.content.len());
 
+                #[cfg(feature = "dump_debug_stream")]
                 maybe_dump_debug(audio.content.clone(), dump_dir.clone());
 
                 let inf = match Reader::new(Cursor::new(&*audio.content)) {
