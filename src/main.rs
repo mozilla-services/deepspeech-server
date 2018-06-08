@@ -5,7 +5,7 @@ extern crate serde_derive;
 
 extern crate simplelog;
 
-use std::sync::mpsc::sync_channel;
+use std::sync::mpsc::channel;
 use std::thread;
 
 mod args;
@@ -25,7 +25,7 @@ fn main() {
 
     debug!("Parsed all CLI args: {:?}", rc);
 
-    let (tx_audio, rx_audio) = sync_channel(0);
+    let (tx_audio, rx_audio) = channel();
 
     let mut threads = Vec::new();
     let rc_inference = rc.clone();

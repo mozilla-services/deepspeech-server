@@ -10,15 +10,15 @@ use self::hyper::service::service_fn;
 use self::hyper::{Body, Method, Request, Response, Server, StatusCode};
 
 use std::net::{IpAddr, SocketAddr};
-use std::sync::mpsc::sync_channel;
-use std::sync::mpsc::SyncSender;
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Sender;
 
 type ResponseFuture = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
 use inference::InferenceResult;
 use inference::RawAudioPCM;
 
-static mut tx_audio: Option<SyncSender<(RawAudioPCM, SyncSender<InferenceResult>)>> = None;
+static mut tx_audio: Option<Sender<(RawAudioPCM, Sender<InferenceResult>)>> = None;
 
 fn http_handler(req: Request<Body>) -> ResponseFuture {
     debug!("Received HTTP: {} {}", req.method(), req.uri());
@@ -39,7 +39,7 @@ fn http_handler(req: Request<Body>) -> ResponseFuture {
                             content: raw_pcm.clone(),
                         };
 
-                        let (tx_string, rx_string) = sync_channel(0);
+                        let (tx_string, rx_string) = channel();
 
                         unsafe {
                             match tx_audio {
@@ -109,7 +109,7 @@ fn http_handler(req: Request<Body>) -> ResponseFuture {
 pub fn th_http_listener(
     http_ip: IpAddr,
     http_port: TcpPort,
-    _tx_audio: SyncSender<(RawAudioPCM, SyncSender<InferenceResult>)>,
+    _tx_audio: Sender<(RawAudioPCM, Sender<InferenceResult>)>,
 ) {
     unsafe {
         tx_audio = Some(_tx_audio);

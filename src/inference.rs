@@ -19,7 +19,7 @@ use self::deepspeech::Model;
 use std::fs::File;
 use std::io::Cursor;
 use std::path::Path;
-use std::sync::mpsc::{Receiver, SyncSender};
+use std::sync::mpsc::{Receiver, Sender};
 use std::time::Instant;
 use std::vec::Vec;
 
@@ -203,7 +203,7 @@ pub fn th_inference(
     alphabet: String,
     lm: String,
     trie: String,
-    rx_audio: Receiver<(RawAudioPCM, SyncSender<InferenceResult>)>,
+    rx_audio: Receiver<(RawAudioPCM, Sender<InferenceResult>)>,
     dump_dir: String,
     warmup_dir: String,
     warmup_cycles: i32,
