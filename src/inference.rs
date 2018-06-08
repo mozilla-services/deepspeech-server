@@ -209,6 +209,9 @@ pub fn th_inference(
             }
         };
 
-        tx_string.send(inf_result);
+        match tx_string.send(inf_result) {
+            Ok(_) => {}
+            Err(err) => error!("Error sending inference result: {:?}", err),
+        }
     }
 }
