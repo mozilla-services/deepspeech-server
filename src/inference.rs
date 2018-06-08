@@ -158,8 +158,13 @@ fn maybe_dump_debug(stream: Bytes, directory: String) {
         temp_root, temp_file_name
     );
 
-    let mut file = TempFile::new(temp_file_name.to_str().unwrap(), false).unwrap();
-    file.write(&*stream).unwrap();
+    match TempFile::new(temp_file_name.to_str().unwrap(), false) {
+        Ok(mut file) => match file.write(&*stream) {
+            Ok(_) => debug!("Sucessfully write debug file"),
+            Err(err) => error!("Error writing content of debug file {:?}", err),
+        },
+        Err(err) => error!("Error creating debug file: {:?}", err),
+    }
 }
 
 pub fn th_inference(
