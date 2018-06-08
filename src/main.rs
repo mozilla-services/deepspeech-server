@@ -41,6 +41,8 @@ fn main() {
                 rx_audio,
                 tx_string,
                 rc_inference.dump_dir,
+                rc_inference.warmup_dir,
+                rc_inference.warmup_cycles,
             );
         });
     threads.push(thread_inference);

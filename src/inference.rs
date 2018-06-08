@@ -16,12 +16,12 @@ use self::byte_slice_cast::*;
 use self::bytes::Bytes;
 use self::deepspeech::Model;
 
+use std::fs::File;
 use std::io::Cursor;
 use std::path::Path;
 use std::sync::mpsc::{Receiver, SyncSender};
-use std::vec::Vec;
-
 use std::time::Instant;
+use std::vec::Vec;
 
 #[derive(Debug)]
 pub struct RawAudioPCM {
@@ -167,6 +167,37 @@ fn maybe_dump_debug(stream: Bytes, directory: String) {
     }
 }
 
+fn maybe_warmup_model(mut m: &mut Model, directory: String, cycles: i32) {
+    let warmup_dir = Path::new(&directory);
+    let mut allwaves = Vec::new();
+
+    for entry in warmup_dir.read_dir().expect("read_dir call failed") {
+        if let Ok(entry) = entry {
+            match entry.path().extension() {
+                Some(ext) if ext == "wav" => {
+                    debug!("Found one more WAV file: {:?}", entry.path());
+                    allwaves.push(entry.path());
+                }
+                Some(_) => {}
+                None => {}
+            }
+        }
+    }
+
+    for wave in allwaves.iter() {
+        debug!("Warmup with {:?}", wave);
+        if let Ok(audio_file) = File::open(wave) {
+            if let Ok(mut reader) = Reader::new(audio_file) {
+                let audio_buf: Vec<_> = reader.samples().map(|s| s.unwrap()).collect::<Vec<_>>();
+                for i in 0..cycles {
+                    info!("Warmup cycle {} of {}", i + 1, cycles);
+                    inference(&mut m, &*audio_buf);
+                }
+            }
+        }
+    }
+}
+
 pub fn th_inference(
     model: String,
     alphabet: String,
@@ -175,12 +206,18 @@ pub fn th_inference(
     rx_audio: Receiver<RawAudioPCM>,
     tx_string: SyncSender<InferenceResult>,
     dump_dir: String,
+    warmup_dir: String,
+    warmup_cycles: i32,
 ) {
     info!("Inference thread started");
     let mut model_instance = start_model(model, alphabet, lm, trie);
 
+    if warmup_dir.len() > 0 {
+        maybe_warmup_model(&mut model_instance, warmup_dir.clone(), warmup_cycles);
+    }
+
     loop {
-        info!("Waiting ...");
+        info!("Model ready and waiting for data to infer ...");
         let inf_result = match rx_audio.recv() {
             Ok(audio) => {
                 info!("Received message: {:?} bytes", audio.content.len());

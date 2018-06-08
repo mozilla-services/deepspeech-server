@@ -31,6 +31,8 @@ pub struct RuntimeConfig {
     pub http_ip: IpAddr,
     pub http_port: TcpPort,
     pub dump_dir: String,
+    pub warmup_dir: String,
+    pub warmup_cycles: i32,
     pub model: String,
     pub alphabet: String,
     pub lm: String,
@@ -110,6 +112,24 @@ impl ArgsParser {
                     .required(false),
             )
             .arg(
+                clap::Arg::with_name("warmup_dir")
+                    .short("w")
+                    .long("warmup_dir")
+                    .value_name("WARMUP_DIR")
+                    .help("Directory to use to warmup model")
+                    .takes_value(true)
+                    .required(false),
+            )
+            .arg(
+                clap::Arg::with_name("warmup_cycles")
+                    .short("c")
+                    .long("warmup_cycles")
+                    .value_name("WARMUP_CYCLES")
+                    .help("How many warmup cycles to perform for each WAVE in WARMUP_DIR")
+                    .takes_value(true)
+                    .required(false),
+            )
+            .arg(
                 clap::Arg::with_name("model")
                     .short("m")
                     .long("model")
@@ -157,6 +177,12 @@ impl ArgsParser {
             http_ip: ArgsParser::to_ip_addr(matches.value_of("http_ip")),
             http_port: ArgsParser::to_port(matches.value_of("http_port")),
             dump_dir: String::from(matches.value_of("dump_dir").unwrap_or("/tmp")),
+            warmup_dir: String::from(matches.value_of("warmup_dir").unwrap_or("")),
+            warmup_cycles: matches
+                .value_of("warmup_cycles")
+                .unwrap_or("10")
+                .parse::<i32>()
+                .unwrap(),
             model: String::from(matches.value_of("model").unwrap()),
             alphabet: String::from(matches.value_of("alphabet").unwrap()),
             lm: String::from(matches.value_of("lm").unwrap()),
