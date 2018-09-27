@@ -45,7 +45,6 @@ const N_CONTEXT: u16 = 9;
 const BEAM_WIDTH: u16 = 500;
 
 const LM_WEIGHT: f32 = 1.75;
-const WORD_COUNT_WEIGHT: f32 = 1.0;
 const VALID_WORD_COUNT_WEIGHT: f32 = 1.0;
 
 // The model has been trained on this specific
@@ -61,14 +60,13 @@ fn start_model(model: String, alphabet: String, lm: String, trie: String) -> Mod
         N_CONTEXT,
         Path::new(&alphabet),
         BEAM_WIDTH,
-    );
+    ).unwrap();
 
     m.enable_decoder_with_lm(
         Path::new(&alphabet),
         Path::new(&lm),
         Path::new(&trie),
         LM_WEIGHT,
-        WORD_COUNT_WEIGHT,
         VALID_WORD_COUNT_WEIGHT,
     );
 

@@ -1,6 +1,6 @@
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
-ARG DEEPSPEECH_VERSION=v0.2.0-alpha.6
+ARG DEEPSPEECH_VERSION=v0.2.1-alpha.1
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
@@ -35,18 +35,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
 RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.deepspeech.native_client.${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | pixz -d | tar -C ${HOME}/lib/ -xf -
 
-RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.tensorflow.pip.r1.6.cpu/artifacts/public/convert_graphdef_memmapped_format -sSL > $HOME/bin/convert_graphdef_memmapped_format && chmod +x $HOME/bin/convert_graphdef_memmapped_format 
-
-RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v0.1.1/deepspeech-0.1.1-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
-
-RUN $HOME/bin/convert_graphdef_memmapped_format --in_graph=${HOME}/data/models/output_graph.pb --out_graph=${HOME}/data/models/output_graph.pbmm
-
-RUN rm ${HOME}/data/models/lm.binary ${HOME}/data/models/trie
-
-RUN curl -sSL $(curl -H 'Accept: application/vnd.git-lfs+json' -X POST 'https://github.com/mozilla/DeepSpeech.git/info/lfs/objects/batch' -d '{"operation":"download","objects":[{"oid":"42c7dd8845a67d30329a49f8da744e199784c1735c5f65923ac375deaae9bfd7","size":66270754}]}' | grep "href" | cut -d'"' -f4) > ${HOME}/data/models/lm.binary
-
-
-RUN curl -sSL $(curl -H 'Accept: application/vnd.git-lfs+json' -X POST 'https://github.com/mozilla/DeepSpeech.git/info/lfs/objects/batch' -d '{"operation":"download","objects":[{"oid":"f9bf297962d12288997c52c01c8710ef08a014b190a6bdd7f98112a6c829fe4b","size":22037026}]}' | grep "href" | cut -d'"' -f4) > ${HOME}/data/models/trie
+RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v0.2.0/deepspeech-0.2.0-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
 
 # Force stubs required for building, but breaking runtime
 RUN LD_LIBRARY_PATH=$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH cargo install --force --git https://gitlab.com/deepspeech/ds-srv.git
