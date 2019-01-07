@@ -1,6 +1,6 @@
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
-ARG DEEPSPEECH_VERSION=v0.3.0
+ARG DEEPSPEECH_VERSION=0.4.0
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
@@ -33,9 +33,9 @@ RUN mkdir -p ${HOME}/lib/ ${HOME}/bin/ ${HOME}/data/
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
-RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.deepspeech.native_client.${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | pixz -d | tar -C ${HOME}/lib/ -xf -
+RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | pixz -d | tar -C ${HOME}/lib/ -xf -
 
-RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v0.3.0/deepspeech-0.3.0-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
+RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
 
 # Force stubs required for building, but breaking runtime
 RUN LD_LIBRARY_PATH=$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH cargo install --force --git https://gitlab.com/deepspeech/ds-srv.git
