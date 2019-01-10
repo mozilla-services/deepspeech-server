@@ -1,6 +1,6 @@
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
-ARG DEEPSPEECH_VERSION=0.4.0
+ARG DEEPSPEECH_VERSION=0.4.1
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
