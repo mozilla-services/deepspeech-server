@@ -14,7 +14,7 @@ RUN useradd -c 'ds-srv' -m -d /home/ds -s /bin/bash ds
 ENV CUDA_ROOT /usr/local/cuda-9.0/
 ENV HOME /home/ds
 ENV DS_VER $DEEPSPEECH_VERSION
-ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH
 ENV LIBRARY_PATH $LD_LIBRARY_PATH
 ENV PATH $HOME/.cargo/bin/:$HOME/bin/:$PATH
 
@@ -22,6 +22,19 @@ ENV PATH $HOME/.cargo/bin/:$HOME/bin/:$PATH
 #RUN ln -s libcuda.so.1 $CUDA_ROOT/lib64/stubs/libcuda.so
 
 RUN ln -s libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
+
+RUN mkdir /app && chown ds:ds /app
+
+RUN echo "{ \
+  \"source\" : \"https://github.com/mozilla-services/ds-srv\", \
+  \"version\": \"$DEEPSPEECH_VERSION\", \
+  \"commit\" : \"\", \
+  \"build\"  : \"\" \
+}" > /app/version.json
+
+RUN chown ds:ds /app/version.json
+
+RUN cat /app/version.json
 
 USER ds
 
@@ -38,7 +51,7 @@ RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.deepspeech.nat
 RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
 
 # Force stubs required for building, but breaking runtime
-RUN LD_LIBRARY_PATH=$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH cargo install --force --git https://gitlab.com/deepspeech/ds-srv.git
+RUN cargo install --force --git https://gitlab.com/deepspeech/ds-srv.git
 
 ENTRYPOINT ds-srv \
 	-vvvv \

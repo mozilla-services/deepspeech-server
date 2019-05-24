@@ -13,6 +13,9 @@ use std::net::{IpAddr, SocketAddr};
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 
+use std::fs::File;
+use std::io::Read;
+
 type ResponseFuture = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
 use inference::InferenceResult;
@@ -23,6 +26,37 @@ static mut tx_audio: Option<Sender<(RawAudioPCM, Sender<InferenceResult>)>> = No
 fn http_handler(req: Request<Body>) -> ResponseFuture {
     debug!("Received HTTP: {} {}", req.method(), req.uri());
     match (req.method(), req.uri().path()) {
+        (&Method::GET, "/__version__") => {
+            debug!("Reading version JSON from /app/version.json");
+            let mut json_version = String::new();
+            let mut file = File::open("/app/version.json").unwrap();
+            file.read_to_string(&mut json_version).unwrap();
+            Box::new(future::ok(
+                Response::builder()
+                    .status(StatusCode::OK)
+                    .header(CONTENT_TYPE, "application/json")
+                    .body(Body::from(json_version))
+                    .unwrap()
+            ))
+        },
+        (&Method::GET, "/__heartbeat__") => {
+            debug!("App heatbeat checks");
+            Box::new(future::ok(
+                Response::builder()
+                    .status(StatusCode::OK)
+                    .body(Body::from(""))
+                    .unwrap()
+            ))
+        },
+        (&Method::GET, "/__lbheartbeat__") => {
+            debug!("Load-Balancer heatbeat checks");
+            Box::new(future::ok(
+                Response::builder()
+                    .status(StatusCode::OK)
+                    .body(Body::from(""))
+                    .unwrap()
+            ))
+        },
         (&Method::POST, "/") => {
             debug!("POST connection accepted");
             let (parts, body) = req.into_parts();
