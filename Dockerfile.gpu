@@ -1,6 +1,6 @@
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
 
-ARG DEEPSPEECH_VERSION=0.4.1
+ARG DEEPSPEECH_VERSION=0.5.1
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
@@ -11,7 +11,7 @@ RUN apt-get update && \
 
 RUN useradd -c 'ds-srv' -m -d /home/ds -s /bin/bash ds
 
-ENV CUDA_ROOT /usr/local/cuda-9.0/
+ENV CUDA_ROOT /usr/local/cuda-10.0/
 ENV HOME /home/ds
 ENV DS_VER $DEEPSPEECH_VERSION
 ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH
