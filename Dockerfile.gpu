@@ -48,7 +48,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
 RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | pixz -d | tar -C ${HOME}/lib/ -xf -
 
-RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
+RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ --strip-components 1 -xvf -
 
 # Force stubs required for building, but breaking runtime
 RUN cargo install --force --git https://gitlab.com/deepspeech/ds-srv.git
