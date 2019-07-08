@@ -1,6 +1,6 @@
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
 
-ARG DEEPSPEECH_VERSION=0.4.1
+ARG DEEPSPEECH_VERSION=0.5.1
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
@@ -11,7 +11,7 @@ RUN apt-get update && \
 
 RUN useradd -c 'ds-srv' -m -d /home/ds -s /bin/bash ds
 
-ENV CUDA_ROOT /usr/local/cuda-9.0/
+ENV CUDA_ROOT /usr/local/cuda-10.0/
 ENV HOME /home/ds
 ENV DS_VER $DEEPSPEECH_VERSION
 ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH
@@ -42,13 +42,13 @@ EXPOSE 8080
 
 WORKDIR /home/ds
 
-RUN mkdir -p ${HOME}/lib/ ${HOME}/bin/ ${HOME}/data/
+RUN mkdir -p ${HOME}/lib/ ${HOME}/bin/ ${HOME}/data/models/
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
 RUN curl https://index.taskcluster.net/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | pixz -d | tar -C ${HOME}/lib/ -xf -
 
-RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/ -xf -
+RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/models/ --strip-components 1 -xvf -
 
 # Force stubs required for building, but breaking runtime
 RUN cargo install --force --git https://gitlab.com/deepspeech/ds-srv.git
