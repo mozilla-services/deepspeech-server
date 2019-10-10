@@ -1,6 +1,6 @@
 [package]
 name = "ds-srv"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Alexandre Lissy <lissyx@lissyx.dyndns.org>"]
 
 [features]
@@ -8,7 +8,7 @@ default = []
 dump_debug_stream = []
 
 [dependencies]
-deepspeech = "0.4.0"
+deepspeech = "0.6.0"
 audrey = "0.2"
 clap = "2.31.2"
 log = "0.4.1"
