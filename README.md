@@ -8,8 +8,8 @@ Run
  - Download compatible DeepSpeech model and extract
  - 
 ```
-$ LD_LIBRARY_PATH=...: ./target/debug/ds-srv --alphabet models/alphabet.txt --model models/output_graph.pbmm --lm models/lm.binary --trie models/trie -vvvvv
-05:16:57 [DEBUG] ds_srv: Parsed all CLI args: RuntimeConfig { http_ip: V6(::), http_port: 8080, dump_dir: "/tmp", warmup_dir: "", warmup_cycles: 10, model: "models/output_graph.pbmm", alphabet: "models/alphabet.txt", lm: "models/lm.binary", trie: "models/trie", verbosity_level: DEBUG }
+$ LD_LIBRARY_PATH=...: ./target/debug/ds-srv --model models/output_graph.pbmm --lm models/lm.binary --trie models/trie -vvvvv
+05:16:57 [DEBUG] ds_srv: Parsed all CLI args: RuntimeConfig { http_ip: V6(::), http_port: 8080, dump_dir: "/tmp", warmup_dir: "", warmup_cycles: 10, model: "models/output_graph.pbmm", lm: "models/lm.binary", trie: "models/trie", verbosity_level: DEBUG }
 Started all thread.
 05:16:57 [INFO] Inference thread started
 TensorFlow: v1.11.0-rc2-4-g77b7b17

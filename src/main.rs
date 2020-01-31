@@ -34,7 +34,6 @@ fn main() {
         .spawn(move || {
             th_inference(
                 rc_inference.model,
-                rc_inference.alphabet,
                 rc_inference.lm,
                 rc_inference.trie,
                 rx_audio,

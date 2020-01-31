@@ -40,8 +40,6 @@ pub struct InferenceResult {
     data: Vec<InferenceData>,
 }
 
-const N_CEP: u16 = 26;
-const N_CONTEXT: u16 = 9;
 const BEAM_WIDTH: u16 = 500;
 
 const LM_WEIGHT: f32 = 0.75;
@@ -53,17 +51,13 @@ const AUDIO_SAMPLE_RATE: u32 = 16000;
 const AUDIO_CHANNELS: u32 = 1;
 const AUDIO_FORMAT: Format = Format::Wav;
 
-fn start_model(model: String, alphabet: String, lm: String, trie: String) -> Model {
+fn start_model(model: String, lm: String, trie: String) -> Model {
     let mut m = Model::load_from_files(
         Path::new(&model),
-        N_CEP,
-        N_CONTEXT,
-        Path::new(&alphabet),
         BEAM_WIDTH,
     ).unwrap();
 
     m.enable_decoder_with_lm(
-        Path::new(&alphabet),
         Path::new(&lm),
         Path::new(&trie),
         LM_WEIGHT,
@@ -130,7 +124,7 @@ fn inference_error() -> InferenceResult {
 fn inference(m: &mut Model, buffer: &[i16]) -> InferenceResult {
     let start = Instant::now();
 
-    let rv = match m.speech_to_text(buffer, AUDIO_SAMPLE_RATE) {
+    let rv = match m.speech_to_text(buffer) {
         Ok(result) => inference_result(result, true),
         Err(err) => {
             error!("Error while running inference: {:?}", err);
@@ -198,7 +192,6 @@ fn maybe_warmup_model(mut m: &mut Model, directory: String, cycles: i32) {
 
 pub fn th_inference(
     model: String,
-    alphabet: String,
     lm: String,
     trie: String,
     rx_audio: Receiver<(RawAudioPCM, Sender<InferenceResult>)>,
@@ -207,7 +200,7 @@ pub fn th_inference(
     warmup_cycles: i32,
 ) {
     info!("Inference thread started");
-    let mut model_instance = start_model(model, alphabet, lm, trie);
+    let mut model_instance = start_model(model, lm, trie);
 
     if warmup_dir.len() > 0 {
         maybe_warmup_model(&mut model_instance, warmup_dir.clone(), warmup_cycles);

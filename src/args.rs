@@ -34,7 +34,6 @@ pub struct RuntimeConfig {
     pub warmup_dir: String,
     pub warmup_cycles: i32,
     pub model: String,
-    pub alphabet: String,
     pub lm: String,
     pub trie: String,
     pub verbosity_level: VerbosityLevel,
@@ -139,15 +138,6 @@ impl ArgsParser {
                     .required(true),
             )
             .arg(
-                clap::Arg::with_name("alphabet")
-                    .short("a")
-                    .long("alphabet")
-                    .value_name("ALPHABET")
-                    .help("Alphabet file matching the TensorFlow model to use")
-                    .takes_value(true)
-                    .required(true),
-            )
-            .arg(
                 clap::Arg::with_name("lm")
                     .short("lm")
                     .long("lm")
@@ -184,7 +174,6 @@ impl ArgsParser {
                 .parse::<i32>()
                 .unwrap(),
             model: String::from(matches.value_of("model").unwrap()),
-            alphabet: String::from(matches.value_of("alphabet").unwrap()),
             lm: String::from(matches.value_of("lm").unwrap()),
             trie: String::from(matches.value_of("trie").unwrap()),
             verbosity_level: ArgsParser::to_verbosity_level(matches.occurrences_of("v")),
