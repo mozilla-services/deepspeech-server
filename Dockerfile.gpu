@@ -17,9 +17,6 @@ ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$CUDA_ROOT/lib64/stubs/:$LD_LIB
 ENV LIBRARY_PATH $LD_LIBRARY_PATH
 ENV PATH $HOME/.cargo/bin/:$HOME/bin/:$PATH
 
-#RUN mv $CUDA_ROOT/lib64/stubs/libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
-#RUN ln -s libcuda.so.1 $CUDA_ROOT/lib64/stubs/libcuda.so
-
 RUN ln -s libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
 
 RUN mkdir /app && chown ds:ds /app
