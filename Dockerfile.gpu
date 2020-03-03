@@ -21,16 +21,7 @@ RUN ln -s libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
 
 RUN mkdir /app && chown ds:ds /app
 
-RUN echo "{ \
-  \"source\" : \"https://github.com/mozilla-services/ds-srv\", \
-  \"version\": \"$DEEPSPEECH_VERSION\", \
-  \"commit\" : \"\", \
-  \"build\"  : \"\" \
-}" > /app/version.json
-
-RUN chown ds:ds /app/version.json
-
-RUN cat /app/version.json
+COPY --chown=ds:ds version.json /app/version.json
 
 USER ds
 
