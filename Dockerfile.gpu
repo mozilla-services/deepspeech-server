@@ -6,8 +6,7 @@ RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
         build-essential \
 	clang-5.0 \
-	curl \
-	pixz
+	curl
 
 RUN useradd -c 'ds-srv' -m -d /home/ds -s /bin/bash ds
 
@@ -18,23 +17,11 @@ ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$CUDA_ROOT/lib64/stubs/:$LD_LIB
 ENV LIBRARY_PATH $LD_LIBRARY_PATH
 ENV PATH $HOME/.cargo/bin/:$HOME/bin/:$PATH
 
-#RUN mv $CUDA_ROOT/lib64/stubs/libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
-#RUN ln -s libcuda.so.1 $CUDA_ROOT/lib64/stubs/libcuda.so
-
 RUN ln -s libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
 
 RUN mkdir /app && chown ds:ds /app
 
-RUN echo "{ \
-  \"source\" : \"https://github.com/mozilla-services/ds-srv\", \
-  \"version\": \"$DEEPSPEECH_VERSION\", \
-  \"commit\" : \"\", \
-  \"build\"  : \"\" \
-}" > /app/version.json
-
-RUN chown ds:ds /app/version.json
-
-RUN cat /app/version.json
+COPY --chown=ds:ds version.json /app/version.json
 
 USER ds
 
@@ -46,7 +33,7 @@ RUN mkdir -p ${HOME}/lib/ ${HOME}/bin/ ${HOME}/data/models/ ${HOME}/src/ds-srv/
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
-RUN curl https://community-tc.services.mozilla.com/api/index/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | pixz -d | tar -C ${HOME}/lib/ -xf -
+RUN curl https://community-tc.services.mozilla.com/api/index/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | xz -d | tar -C ${HOME}/lib/ -xf -
 
 RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/models/ --strip-components 1 -xvf -
 

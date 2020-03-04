@@ -1,0 +1,43 @@
+version: 2.1
+
+jobs:
+  build-job:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Create a version.json
+          command: |
+            # create a version.json per https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+            printf '{"commit":"%s","version":"%s","source":"https://github.com/%s/%s","build":"%s"}\n' \
+            "$CIRCLE_SHA1" \
+            "$CIRCLE_TAG" \
+            "$CIRCLE_PROJECT_USERNAME" \
+            "$CIRCLE_PROJECT_REPONAME" \
+            "$CIRCLE_BUILD_URL" > version.json
+      - run:
+          name: Build Docker image
+          command: docker build -f Dockerfile.gpu -t app:build .
+      - run:
+          name: Push Docker image to Dockerhub
+          command: |
+            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker tag app:build ${DOCKERHUB_REPO}:latest
+              docker push ${DOCKERHUB_REPO}:latest
+            elif  [ ! -z "${CIRCLE_TAG}" ]; then
+              docker tag app:build "${DOCKERHUB_REPO}:${CIRCLE_TAG}"
+              docker push "${DOCKERHUB_REPO}:${CIRCLE_TAG}"
+            fi
+
+workflows:
+  version: 2
+  build-workflow:
+    jobs:
+      - build-job:
+          filters:
+            tags:
+              only: /.*/
