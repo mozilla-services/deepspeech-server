@@ -1,27 +1,31 @@
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
 
 ARG DEEPSPEECH_VERSION=0.6.1
 
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
+        apt-get install -y --no-install-recommends \
         build-essential \
-	clang-5.0 \
-	curl
+        clang-5.0 \
+        sudo \
+        curl
 
 RUN useradd -c 'ds-srv' -m -d /home/ds -s /bin/bash ds
 
 ENV CUDA_ROOT /usr/local/cuda-10.0/
 ENV HOME /home/ds
 ENV DS_VER $DEEPSPEECH_VERSION
-ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$CUDA_ROOT/lib64/stubs/:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$LD_LIBRARY_PATH
 ENV LIBRARY_PATH $LD_LIBRARY_PATH
 ENV PATH $HOME/.cargo/bin/:$HOME/bin/:$PATH
-
-RUN ln -s libcuda.so $CUDA_ROOT/lib64/stubs/libcuda.so.1
 
 RUN mkdir /app && chown ds:ds /app
 
 COPY --chown=ds:ds version.json /app/version.json
+
+# required for ldconfig call to fix libnvidia-ml.so issue
+# Workaround libnvidia-ml.so: https://github.com/NVIDIA/nvidia-docker/issues/854#issuecomment-451464721
+RUN echo "ds ALL=(root) NOPASSWD: /sbin/ldconfig" > /etc/sudoers.d/ds && \
+    chmod 0440 /etc/sudoers.d/ds
 
 USER ds
 
@@ -44,10 +48,10 @@ COPY src ${HOME}/src/ds-srv/src/
 # Force stubs required for building, but breaking runtime
 RUN cargo install --force --path ${HOME}/src/ds-srv/
 
-ENTRYPOINT ds-srv \
-	-vvvv \
-	--model $HOME/data/models/output_graph.pbmm \
-	--lm $HOME/data/models/lm.binary \
-	--trie $HOME/data/models/trie \
-	--http_ip ::0 \
-	--http_port 8080
+ENTRYPOINT sudo /sbin/ldconfig && nvidia-smi && ds-srv \
+        -vvvv \
+        --model $HOME/data/models/output_graph.pbmm \
+        --lm $HOME/data/models/lm.binary \
+        --trie $HOME/data/models/trie \
+        --http_ip ::0 \
+        --http_port 8080
