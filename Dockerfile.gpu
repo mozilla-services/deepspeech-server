@@ -1,6 +1,6 @@
 FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
 
-ARG DEEPSPEECH_VERSION=0.6.1
+ARG DEEPSPEECH_VERSION=0.7.4
 
 RUN apt-get update && \
         apt-get install -y --no-install-recommends \
@@ -39,7 +39,9 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
 RUN curl https://community-tc.services.mozilla.com/api/index/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | xz -d | tar -C ${HOME}/lib/ -xf -
 
-RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.tar.gz -sSL | gunzip | tar -C ${HOME}/data/models/ --strip-components 1 -xvf -
+RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.pbmm -sSL > ${HOME}/data/models/output_graph.pbmm
+
+RUN curl https://github.com/mozilla/DeepSpeech/releases/download/v${DS_VER}/deepspeech-${DS_VER}-models.scorer -sSL > ${HOME}/data/models/kenlm.scorer
 
 COPY Cargo.toml ${HOME}/src/ds-srv/
 
@@ -51,7 +53,6 @@ RUN cargo install --force --path ${HOME}/src/ds-srv/
 ENTRYPOINT sudo /sbin/ldconfig && nvidia-smi && ds-srv \
         -vvvv \
         --model $HOME/data/models/output_graph.pbmm \
-        --lm $HOME/data/models/lm.binary \
-        --trie $HOME/data/models/trie \
+        --scorer $HOME/data/models/kenlm.scorer \
         --http_ip ::0 \
         --http_port 8080

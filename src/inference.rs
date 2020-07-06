@@ -40,28 +40,19 @@ pub struct InferenceResult {
     data: Vec<InferenceData>,
 }
 
-const BEAM_WIDTH: u16 = 500;
-
-const LM_WEIGHT: f32 = 0.75;
-const VALID_WORD_COUNT_WEIGHT: f32 = 1.85;
-
 // The model has been trained on this specific
 // sample rate.
 const AUDIO_SAMPLE_RATE: u32 = 16000;
 const AUDIO_CHANNELS: u32 = 1;
 const AUDIO_FORMAT: Format = Format::Wav;
 
-fn start_model(model: String, lm: String, trie: String) -> Model {
+fn start_model(model: String, scorer: String) -> Model {
     let mut m = Model::load_from_files(
-        Path::new(&model),
-        BEAM_WIDTH,
+        Path::new(&model)
     ).unwrap();
 
-    m.enable_decoder_with_lm(
-        Path::new(&lm),
-        Path::new(&trie),
-        LM_WEIGHT,
-        VALID_WORD_COUNT_WEIGHT,
+    m.enable_external_scorer(
+        Path::new(&scorer)
     );
 
     m
@@ -192,15 +183,14 @@ fn maybe_warmup_model(mut m: &mut Model, directory: String, cycles: i32) {
 
 pub fn th_inference(
     model: String,
-    lm: String,
-    trie: String,
+    scorer: String,
     rx_audio: Receiver<(RawAudioPCM, Sender<InferenceResult>)>,
     dump_dir: String,
     warmup_dir: String,
     warmup_cycles: i32,
 ) {
     info!("Inference thread started");
-    let mut model_instance = start_model(model, lm, trie);
+    let mut model_instance = start_model(model, scorer);
 
     if warmup_dir.len() > 0 {
         maybe_warmup_model(&mut model_instance, warmup_dir.clone(), warmup_cycles);

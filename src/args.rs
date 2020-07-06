@@ -34,8 +34,7 @@ pub struct RuntimeConfig {
     pub warmup_dir: String,
     pub warmup_cycles: i32,
     pub model: String,
-    pub lm: String,
-    pub trie: String,
+    pub scorer: String,
     pub verbosity_level: VerbosityLevel,
 }
 
@@ -138,20 +137,11 @@ impl ArgsParser {
                     .required(true),
             )
             .arg(
-                clap::Arg::with_name("lm")
-                    .short("lm")
-                    .long("lm")
-                    .value_name("LM")
-                    .help("KenLM Language Model to use")
-                    .takes_value(true)
-                    .required(true),
-            )
-            .arg(
-                clap::Arg::with_name("trie")
-                    .short("trie")
-                    .long("trie")
-                    .value_name("TRIE")
-                    .help("KenLM Trie to use")
+                clap::Arg::with_name("scorer")
+                    .short("scorer")
+                    .long("scorer")
+                    .value_name("Scorer")
+                    .help("External scorer to use")
                     .takes_value(true)
                     .required(true),
             )
@@ -174,8 +164,7 @@ impl ArgsParser {
                 .parse::<i32>()
                 .unwrap(),
             model: String::from(matches.value_of("model").unwrap()),
-            lm: String::from(matches.value_of("lm").unwrap()),
-            trie: String::from(matches.value_of("trie").unwrap()),
+            scorer: String::from(matches.value_of("scorer").unwrap()),
             verbosity_level: ArgsParser::to_verbosity_level(matches.occurrences_of("v")),
         }
     }
