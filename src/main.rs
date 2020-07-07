@@ -34,8 +34,7 @@ fn main() {
         .spawn(move || {
             th_inference(
                 rc_inference.model,
-                rc_inference.lm,
-                rc_inference.trie,
+                rc_inference.scorer,
                 rx_audio,
                 rc_inference.dump_dir,
                 rc_inference.warmup_dir,
