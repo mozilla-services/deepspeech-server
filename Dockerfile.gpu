@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
+FROM nvidia/cuda:10.1-runtime-ubuntu18.04
 
 ARG DEEPSPEECH_VERSION=0.9.3
 
@@ -9,9 +9,20 @@ RUN apt-get update && \
         sudo \
         curl
 
+# Do the following, and commend out the next 3 lines of code if you need libcudnn
+# 1. Get the following by signing up for an Nvidia Developer account, then going to https://developer.nvidia.com/cudnn
+# 2. Click on "Download cuDDN"
+# 3. Read and Agree to the Software License Agreement
+# 4. Click on "Archived cuDNN Releases"
+# 5. Click on "Download cuDNN v7.6.5 (November 18th, 2019), for CUDA 10.2"
+# 6. Click on "cuDNN Runtime Library for Ubuntu18.04 (Deb)"
+# WORKDIR $HOME/libcudnn
+# COPY ./libcudnn7_7.6.5.32-1+cuda10.2_amd64.deb .
+# RUN dpkg -i libcudnn7_7.6.5.32-1+cuda10.2_amd64.deb
+
 RUN useradd -c 'ds-srv' -m -d /home/ds -s /bin/bash ds
 
-ENV CUDA_ROOT /usr/local/cuda-10.0/
+ENV CUDA_ROOT /usr/local/cuda-10.1
 ENV HOME /home/ds
 ENV DS_VER $DEEPSPEECH_VERSION
 ENV LD_LIBRARY_PATH $HOME/lib/:$CUDA_ROOT/lib64/:$LD_LIBRARY_PATH
