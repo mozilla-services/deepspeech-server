@@ -1,0 +1,10 @@
+version: '3.2'
+services:
+  deepspeech_server:
+    runtime: nvidia
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    restart: always
+    ports:
+      - '8080:8080'

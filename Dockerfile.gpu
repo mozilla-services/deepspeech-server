@@ -1,6 +1,6 @@
 FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
 
-ARG DEEPSPEECH_VERSION=0.7.4
+ARG DEEPSPEECH_VERSION=0.9.3
 
 RUN apt-get update && \
         apt-get install -y --no-install-recommends \
@@ -35,7 +35,7 @@ WORKDIR /home/ds
 
 RUN mkdir -p ${HOME}/lib/ ${HOME}/bin/ ${HOME}/data/models/ ${HOME}/src/ds-srv/
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.41.1
 
 RUN curl https://community-tc.services.mozilla.com/api/index/v1/task/project.deepspeech.deepspeech.native_client.v${DS_VER}.gpu/artifacts/public/native_client.tar.xz -sSL | xz -d | tar -C ${HOME}/lib/ -xf -
 
